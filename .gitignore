@@ -1,0 +1,9 @@
+.DS_Store
+
+.svelte-kit/
+dist/
+node_modules/
+package/
+
+# `npm pack` outputs
+storables*.tgz
