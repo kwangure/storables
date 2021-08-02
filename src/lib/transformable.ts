@@ -98,10 +98,6 @@ export function transformable<K extends string, I, O extends Obj>(
 export function transformable<T>(options: Options<T>, value?: T): Obj {
     const { name, transforms = {}, start = noop, validate = valid } = options;
 
-    if (name.length === 0) {
-        throw Error("Expected transformable name to be a non-empty string");
-    }
-
     if (name in transforms) {
         throw Error(`Transformable name '${name}' should not be included in transforms.`);
     }
