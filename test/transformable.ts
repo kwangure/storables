@@ -3,6 +3,8 @@ import { describe } from "../scripts/test.js";
 import { noop } from "../src/lib/utils";
 import { transformable } from "../src/lib/transformable";
 
+// TODO: `invalidate`-`svelte/store/derived` tests
+
 describe("transformable", (it) => {
     it("creates named writable stores", () => {
         const stores = transformable({
@@ -18,7 +20,7 @@ describe("transformable", (it) => {
         const names = [];
         for (const name in stores) names.push(name); // eslint-disable-line guard-for-in
 
-        const expect = ["count", "countError", "string_count", "string_countError"];
+        const expect = ["string_count", "string_countError", "count", "countError"];
         assert.equal(names, expect);
 
         const { count, string_count } = stores;

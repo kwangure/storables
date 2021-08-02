@@ -132,7 +132,7 @@ export function transformable<T>(options: Options<T>, value?: T): Obj {
 
     function subscribe(
         run: Subscriber<T>,
-        invalidate: Invalidator<T> = noop,
+        invalidate: Invalidator<T>,
     ): Unsubscriber {
         const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
         subscribers.add(subscriber);
@@ -156,7 +156,7 @@ export function transformable<T>(options: Options<T>, value?: T): Obj {
     function subscribe_error(
         transform: string,
         run: Subscriber<unknown>,
-        invalidate: Invalidator<unknown> = noop,
+        invalidate: Invalidator<unknown>,
     ): Unsubscriber {
         const subscriber: SubscribeInvalidateTuple<unknown> = [run, invalidate];
 
@@ -197,28 +197,11 @@ export function transformable<T>(options: Options<T>, value?: T): Obj {
         }
     }
 
-    const stores: Obj = {
-        [name]: {
-            set(new_value: T): void {
-                set_if_valid(new_value, validate, { name, fn: identity });
-            },
-            update(fn: Updater<T>): void {
-                set_if_valid(fn(value), validate, { name, fn: identity });
-            },
-            subscribe,
-            get() {
-                return value;
-            },
-        },
-        [`${name}Error`]: {
-            subscribe(fn) {
-                return subscribe_error(name, fn);
-            },
-            get() {
-                return errors.get(name);
-            },
-        },
-    };
+    Object.assign(transforms, {
+        [name]: { to: identity, from: identity, validate },
+    });
+
+    const stores: Obj = {};
 
     /* eslint-disable no-loop-func */
     for (const transform in transforms) {
@@ -235,20 +218,26 @@ export function transformable<T>(options: Options<T>, value?: T): Obj {
                         fn: to,
                     });
                 },
-                update(fn: (arg0: unknown) => unknown) {
+                update(fn: Updater<unknown>) {
                     set_if_valid(fn(from(value)), validate, {
                         name: transform,
                         fn: to,
                     });
                 },
-                subscribe(fn: (arg0: unknown) => void) {
-                    return subscribe((value) => fn(from(value)));
+                subscribe(
+                    fn: Subscriber<unknown>,
+                    invalidate: Invalidator<T> = noop,
+                ) {
+                    return subscribe((value) => fn(from(value)), invalidate);
                 },
             };
 
             stores[`${transform}Error`] = {
-                subscribe(fn) {
-                    return subscribe_error(transform, fn);
+                subscribe(
+                    fn: Subscriber<unknown>,
+                    invalidate: Invalidator<T> = noop,
+                ) {
+                    return subscribe_error(transform, fn, invalidate);
                 },
                 get() {
                     return errors.get(transform);
