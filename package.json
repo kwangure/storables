@@ -14,7 +14,9 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "eslint . --fix",
-    "test": "node --experimental-loader esbuild-node-loader node_modules/uvu/bin.js test"
+    "test": "node --experimental-loader esbuild-node-loader node_modules/uvu/bin.js test",
+    "release-candidate": "standard-version -a --prerelease rc && npm publish --tag rc && git push --follow-tags origin master",
+    "release": "standard-version -a && npm publish && git push --follow-tags origin master"
   },
   "devDependencies": {
     "@kwangure/eslint-config-svelte": "^0.1.17",
@@ -27,6 +29,7 @@
     "eslint": "^7.22.0",
     "eslint-plugin-svelte3": "^3.2.0",
     "rollup-plugin-dts": "^3.0.2",
+    "standard-version": "^9.3.1",
     "svelte": "^3.34.0",
     "svelte-check": "^2.0.0",
     "svelte-preprocess": "^4.0.0",

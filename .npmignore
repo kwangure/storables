@@ -1,0 +1,13 @@
+# Directories
+.svelte-kit/
+scripts/
+src/
+static/
+test/
+dist/dts/
+
+# Configs
+.eslint*
+rollup.config.js
+svelte.config.js
+tsconfig.json
