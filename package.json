@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "exports": {
     ".": "./dist/index.js",
+    "./persistable": "./dist/persistable.js",
     "./transformable": "./dist/transformable.js"
   },
   "scripts": {

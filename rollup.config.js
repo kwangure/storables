@@ -11,6 +11,7 @@ export default [
         input: [
             "src/lib/index.ts",
             "src/lib/transformable.ts",
+            "src/lib/persistable.ts",
         ],
         output: {
             dir: "dist",
@@ -24,6 +25,7 @@ export default [
         input: [
             "dist/dts/index.d.ts",
             "dist/dts/transformable.d.ts",
+            "dist/dts/persistable.d.ts",
         ],
         output: { dir: "dist" },
         plugins: [dts()],
