@@ -1,4 +1,4 @@
-import { identity, noop, safe_not_equal, valid } from "./utils";
+import { identity, noop, safe_equal, valid } from "./utils";
 import type {
     Invalidator,
     Readable,
@@ -47,6 +47,11 @@ export interface Options<T> {
     }>
 
     /**
+     * Compare old and new writable value to determine whether to update
+     */
+    equal?: (a: T, b: T) => boolean;
+
+    /**
      * Start and stop notification callbacks for subscriptions
      */
     start?: StartStopNotifier<T>;
@@ -80,6 +85,7 @@ export function transformable<K extends string, I, O extends Obj>(
                 validate?: Validator<O[P]>
             }
         },
+        equal?: (a: I, b: I) => boolean,
         start?: StartStopNotifier<I>,
         validate?: Validator<I>,
     },
@@ -96,7 +102,13 @@ export function transformable<K extends string, I, O extends Obj>(
  * @param {*} value initial value
  */
 export function transformable<T>(options: Options<T>, value?: T): Obj {
-    const { name, transforms = {}, start = noop, validate = valid } = options;
+    const {
+        name,
+        transforms = {},
+        start = noop,
+        validate = valid,
+        equal = safe_equal,
+    } = options;
 
     if (name in transforms) {
         throw Error(`Transformable name '${name}' should not be included in transforms.`);
@@ -122,7 +134,7 @@ export function transformable<T>(options: Options<T>, value?: T): Obj {
     let stop: Unsubscriber;
     const subscribers: Set<SubscribeInvalidateTuple<T>> = new Set();
     function set(new_value: T): void {
-        if (safe_not_equal(value, new_value)) {
+        if (!equal(value, new_value)) {
             value = new_value;
             if (stop) { // store is ready
                 call_subscribers(subscribers, value);

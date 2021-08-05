@@ -182,4 +182,19 @@ describe("transformable", (it) => {
         assert.is(errors.size, 2);
         assert.not.ok(errors.has("date"));
     });
+
+    it("checks for equality", () => {
+        let equal = true;
+        const { count } = transformable({
+            name: "count",
+            equal: () => equal,
+        }, 0);
+
+        count.set(1);
+        assert.is(count.get(), 0);
+
+        equal = false;
+        count.set(1);
+        assert.is(count.get(), 1);
+    });
 });
