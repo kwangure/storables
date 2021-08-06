@@ -1,6 +1,6 @@
 {
   "name": "storables",
-  "version": "0.0.2-rc.0",
+  "version": "0.0.2-rc.1",
   "exports": {
     ".": "./dist/index.js",
     "./persistable": "./dist/persistable.js",
