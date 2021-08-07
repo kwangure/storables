@@ -1,6 +1,5 @@
 import * as assert from "uvu/assert";
-import { assert_readable, assert_writable } from "./store_test_utils";
-import { describe } from "../scripts/test.js";
+import { assert_readable, assert_writable, describe } from "./test_utils";
 import { persistable } from "../src/lib/persistable";
 
 describe("persistable", (it) => {

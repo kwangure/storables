@@ -1,6 +1,13 @@
 import * as assert from "uvu/assert";
+import * as uvu from "uvu";
 import { Readable, Writable } from "../src/lib/types";
 import { has_func } from "../src/lib/utils";
+
+export function describe(name, fn) {
+    const suite = uvu.suite(name);
+    fn(suite);
+    suite.run();
+}
 
 export function is_writable(thing: unknown): thing is Writable<unknown> {
     const expected_funcs = ["get", "set", "update", "subscribe"];

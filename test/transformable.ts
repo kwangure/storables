@@ -1,5 +1,5 @@
 import * as assert from "uvu/assert";
-import { describe } from "../scripts/test.js";
+import { describe } from "./test_utils";
 import { noop } from "../src/lib/utils";
 import { transformable } from "../src/lib/transformable";
 
