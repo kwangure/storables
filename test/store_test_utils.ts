@@ -54,9 +54,9 @@ export function assert_writable(...stores: unknown[]): void {
     }
 }
 
-export function assert_readable(...stores: unknown[]): boolean {
+export function assert_readable(...stores: unknown[]): void {
     stores.forEach((store) => {
-        assert.ok(is_readable(store), Error("Store is not a readable"));
+        assert.ok(store, Error(`Expected a truthy readable value. Received '${store}'`));
 
         // Narrow type to `Readable`
         if (is_readable(store)) {
@@ -65,6 +65,4 @@ export function assert_readable(...stores: unknown[]): boolean {
             })();
         }
     });
-
-    return true;
 }
