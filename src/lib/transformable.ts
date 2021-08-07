@@ -24,7 +24,7 @@ interface TransformError<T> extends Error {
 /** Guard writable from invalid values */
 type Validator<T> = (value?: T) => (boolean | Error);
 
-export interface Options<T> {
+export interface TransformableOptions<T> {
     name: string;
     transforms?: Record<string, {
         /**
@@ -101,7 +101,7 @@ export function transformable<K extends string, I, O extends Obj>(
  * @param {Options} options transformable options
  * @param {*} value initial value
  */
-export function transformable<T>(options: Options<T>, value?: T): Obj {
+export function transformable<T>(options: TransformableOptions<T>, value?: T): Obj {
     const {
         name,
         transforms = {},
