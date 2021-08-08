@@ -3,7 +3,7 @@ import * as uvu from "uvu";
 import { Readable, Writable } from "../src/lib/types";
 import { has_func } from "../src/lib/utils";
 
-export function describe(name, fn) {
+export function describe(name: string, fn: (it: uvu.Test) => void): void {
     const suite = uvu.suite(name);
     fn(suite);
     suite.run();
@@ -41,8 +41,6 @@ export function assert_writable(...stores: unknown[]): void {
         // Narrow type to `Writable`
         if (!is_writable(count)) return;
 
-        const intial = count.get();
-
         const counts = [];
         const unsubscribe = count.subscribe((value) => {
             counts.push(value);
@@ -56,8 +54,8 @@ export function assert_writable(...stores: unknown[]): void {
         count.set(3);
         count.update((n) => Number(n) + 1);
 
-        assert.equal(counts, [intial, 0, 1]);
-        assert.equal(count.get(), 4);
+        assert.is(counts.length, 3, Error("'subscribe' should be called when 'set' or 'update' changes the store value"));
+        count.reset?.();
     }
 }
 
@@ -68,7 +66,7 @@ export function assert_readable(...stores: unknown[]): void {
         // Narrow type to `Readable`
         if (is_readable(store)) {
             store.subscribe((value) => {
-                assert.is(store.get(), value);
+                assert.is(store.get(), value, Error("'subscribe' and 'get' should return the same value in readables"));
             })();
         }
     });

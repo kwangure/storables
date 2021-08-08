@@ -1,20 +1,49 @@
 /** Callback to inform of a value updates. */
-export type Subscriber<T> = (value: T) => void;
+export type Subscriber<T = unknown> = (value: T) => void;
 
 /** Unsubscribes from value updates. */
 export type Unsubscriber = () => void;
 
 /** Callback to update a value. */
-export type Updater<T> = (value: T) => T;
+export type Updater<T = unknown> = (value: T) => T;
 
 /** Start and stop notification callbacks. */
 export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 
+/** Guard writable from invalid values */
+export type Validator<T> = (value?: T) => (boolean | Error);
+
 /** Cleanup logic callback. */
-export type Invalidator<T> = (value?: T) => void;
+export type Invalidator<T = unknown> = (value?: T) => void;
 
 /** Pair of subscriber and invalidator. */
 export type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+
+/** Compare if two values are equal */
+export type Equal<T> = (a: T, b: T) => boolean;
+
+export type ErrorSubscriber<T> = SubscribeInvalidateTuple<TransformError<T>>;
+
+/** A writable's internal state */
+export interface State<T> {
+	start?: StartStopNotifier<T>;
+	stop?: Unsubscriber;
+	value: T;
+	equal?: Equal<T>,
+	subscribers: Set<SubscribeInvalidateTuple<T>>,
+	ready?: boolean;
+	error?: Omit<State<TransformError<T>>, "error">,
+};
+
+/** Transform to new value */
+export interface Transformer<T1, T2> {
+    name: string;
+    fn: (value: T1) => T2;
+}
+
+export interface TransformError<T> extends Error {
+    value: T;
+}
 
 export interface Readable<T> {
     /**
@@ -32,6 +61,11 @@ export interface Readable<T> {
 	 * Get store value.
 	 */
 	get(this: void): T;
+
+	/**
+	 * Revert store to its original value
+	 */
+	reset(this: void): void;
 }
 
 export interface Writable<T> extends Readable<T> {

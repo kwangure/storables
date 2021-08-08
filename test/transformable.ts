@@ -1,9 +1,11 @@
 import * as assert from "uvu/assert";
-import { describe } from "./test_utils";
+import { assert_readable, assert_writable, describe } from "./test_utils";
 import { noop } from "../src/lib/utils";
 import { transformable } from "../src/lib/transformable";
 
 // TODO: `invalidate`-`svelte/store/derived` tests
+// TODO: start and stop are called only once
+// TODO: Set after error reverts error to null
 
 describe("transformable", (it) => {
     it("creates named writable stores", () => {
@@ -15,15 +17,12 @@ describe("transformable", (it) => {
                     from: String,
                 },
             },
-        }, 0);
+        }, undefined as number);
 
-        const names = [];
-        for (const name in stores) names.push(name); // eslint-disable-line guard-for-in
+        const { count, countError, string_count, string_countError } = stores;
 
-        const expect = ["string_count", "string_countError", "count", "countError"];
-        assert.equal(names, expect);
-
-        const { count, string_count } = stores;
+        assert_writable(count, string_count);
+        assert_readable(countError, string_countError);
 
         const counts = [];
         const unsubscribe_c = count.subscribe((value) => {
@@ -50,8 +49,8 @@ describe("transformable", (it) => {
         string_count.set("5");
         string_count.update((n) => `${n}2`);
 
-        assert.equal(counts, [0, 1, 2, 3, 31]);
-        assert.equal(string_counts, ["0", "1", "2", "3", "31"]);
+        assert.equal(counts, [undefined, 1, 2, 3, 31]);
+        assert.equal(string_counts, ["undefined", "1", "2", "3", "31"]);
     });
 
     it("creates undefined writable stores", () => {
@@ -65,7 +64,7 @@ describe("transformable", (it) => {
             values.push("error", value);
         })();
 
-        assert.equal(values, ["writable", undefined, "error", undefined]);
+        assert.equal(values, ["writable", undefined, "error", null]);
     });
 
     it("calls start and stop notifiers", () => {
@@ -138,14 +137,14 @@ describe("transformable", (it) => {
             },
         }, now);
 
-        const errors = new Map();
+        const errors = new Set();
         const {
             number, string, date, numberError, dateError, stringError,
         } = afterNow;
 
         function persistError(error) {
             if (error) {
-                errors.set(error.transform, error);
+                errors.add(error);
             }
         }
 
@@ -154,33 +153,30 @@ describe("transformable", (it) => {
         stringError.subscribe(persistError);
 
         // Error stores are all undefined to begin with
-        assert.is(errors.size, 0);
+        assert.is(errors.size, 0, Error("All error stores should begin empty"));
 
         // Valid values triggers now errors
         const newNow = now + 1;
         number.set(newNow);
         assert.is(number.get(), newNow);
-        assert.is(errors.size, 0);
+        assert.is(errors.size, 0, Error("Store should not error on valid values"));
 
         // Validation that returns an `Error` triggers error subscriber calls
         // Store is not modified. `update` is unsuccessful.
         number.update((now) => now - 10);
         assert.is(number.get(), newNow);
         assert.is(errors.size, 1);
-        assert.ok(errors.has("number"));
 
         const wrongNow = String(Number(now) - 10);
         string.set(wrongNow);
         assert.is(number.get(), newNow);
         assert.is(errors.size, 2);
-        assert.is(errors.get("string")?.value, wrongNow);
 
         // Validation that returns `false` triggers no subscriber calls
         // Store is not modified. `set` is unsuccessful.
         date.set(new Date(now - 1));
         assert.is(number.get(), newNow);
         assert.is(errors.size, 2);
-        assert.not.ok(errors.has("date"));
     });
 
     it("checks for equality", () => {
