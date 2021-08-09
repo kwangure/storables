@@ -1,7 +1,7 @@
 import type {
     Invalidator,
+    IOReadable,
     IOStatus,
-    Readable,
     StartStopNotifier,
     SubscribeInvalidateTuple,
     Subscriber,
@@ -46,10 +46,6 @@ export interface PersistableOptions<T> {
     equal?: (a: T, b: T) => boolean;
 }
 
-export interface ErrorReadable<T> extends Readable<T> {
-    error: Error;
-}
-
 const subscriber_queue = [];
 
 export function persistable<K extends string, I>(
@@ -62,9 +58,9 @@ export function persistable<K extends string, I>(
 ) : {
         [P in K] : Writable<I>
     } & {
-        [P in `${K}ReadStatus`] : ErrorReadable<IOStatus>;
+        [P in `${K}ReadStatus`] : IOReadable<I>;
     } & {
-        [P in `${K}WriteStatus`] : ErrorReadable<IOStatus>;
+        [P in `${K}WriteStatus`] : IOReadable<I>;
     }
 
 export function persistable<T>(
@@ -99,7 +95,7 @@ export function persistable<T>(
     };
 
     const read_subscribers: Set<SubscribeInvalidateTuple<IOStatus>> = new Set();
-    const read_status_readable: ErrorReadable<IOStatus> = {
+    const read_status_readable: IOReadable<T> = {
         subscribe(
             run: Subscriber<IOStatus>,
             invalidate: Invalidator<IOStatus> = noop,
@@ -118,7 +114,7 @@ export function persistable<T>(
     };
 
     const write_subscribers = new Set<SubscribeInvalidateTuple<IOStatus>>();
-    const write_status_readable: ErrorReadable<IOStatus> = {
+    const write_status_readable: IOReadable<T> = {
         subscribe(
             run: Subscriber<IOStatus>,
             invalidate: Invalidator<IOStatus> = noop,
