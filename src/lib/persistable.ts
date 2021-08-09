@@ -67,6 +67,7 @@ export function persistable<T>(
     const start: StartStopNotifier<T> = io.update || noop;
 
     let value: T;
+    let initial_value: T;
 
     const status = {
         _read: "pending",
@@ -103,6 +104,9 @@ export function persistable<T>(
         },
         get: () => status.read,
         error: null,
+        reset() {
+            read_status_readable.error = null;
+        },
     };
 
     const write_subscribers = new Set<SubscribeInvalidateTuple<IOStatus>>();
@@ -119,6 +123,9 @@ export function persistable<T>(
         },
         get: () => status.write,
         error: null,
+        reset() {
+            read_status_readable.error = null;
+        },
     };
 
     function subscribe_io(
@@ -191,6 +198,7 @@ export function persistable<T>(
             } else {
                 set(store_value);
             }
+            initial_value = value;
 
             status.read = "done";
             read_status_readable.error = null;
@@ -227,6 +235,7 @@ export function persistable<T>(
                 set(new_value);
                 write(new_value);
             },
+            reset: () => value = initial_value,
         },
         [`${name}ReadStatus`]: read_status_readable,
         [`${name}WriteStatus`]: write_status_readable,
