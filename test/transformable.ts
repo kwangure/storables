@@ -4,8 +4,6 @@ import { noop } from "../src/lib/utils";
 import { transformable } from "../src/lib/transformable";
 
 // TODO: `invalidate`-`svelte/store/derived` tests
-// TODO: start and stop are called only once
-// TODO: Set after error reverts error to null
 
 describe("transformable", (it) => {
     it("creates named writable stores", () => {
@@ -19,10 +17,15 @@ describe("transformable", (it) => {
             },
         }, undefined as number);
 
-        const { count, countError, string_count, string_countError } = stores;
+        const {
+            count,
+            countValidationStatus,
+            string_count,
+            string_countValidationStatus,
+        } = stores;
 
         assert_writable(count, string_count);
-        assert_readable(countError, string_countError);
+        assert_readable(countValidationStatus, string_countValidationStatus);
 
         const counts = [];
         const unsubscribe_c = count.subscribe((value) => {
@@ -53,18 +56,48 @@ describe("transformable", (it) => {
         assert.equal(string_counts, ["undefined", "1", "2", "3", "31"]);
     });
 
+    it("preserves transforms for all methods", () => {
+        const { count, string_count } = transformable({
+            name: "count",
+            transforms: {
+                string_count: {
+                    to: Number,
+                    from: String,
+                },
+            },
+        }, 0);
+
+        function assert_type(expect: assert.Types, value: unknown) {
+            const type = typeof value;
+            assert.is(type, expect, Error(`Expected ${expect}, saw '${value}' (${type})'`));
+            return value;
+        }
+
+        const is_number = assert_type.bind(undefined, "number");
+        const is_string = assert_type.bind(undefined, "string");
+
+        count.subscribe(is_number)();
+        string_count.subscribe(is_string)();
+
+        is_number(count.get());
+        is_string(string_count.get());
+
+        count.update(is_number);
+        string_count.update(is_string);
+    });
+
     it("creates undefined writable stores", () => {
-        const { writable, writableError } = transformable({ name: "writable" });
+        const { writable, writableValidationStatus } = transformable({ name: "writable" });
         const values = [];
 
         writable.subscribe((value) => {
             values.push("writable", value);
         })();
-        writableError.subscribe((value) => {
-            values.push("error", value);
+        writableValidationStatus.subscribe((value) => {
+            values.push("validation", value);
         })();
 
-        assert.equal(values, ["writable", undefined, "error", null]);
+        assert.equal(values, ["writable", undefined, "validation", "done"]);
     });
 
     it("calls start and stop notifiers", () => {
@@ -96,7 +129,14 @@ describe("transformable", (it) => {
     it("calls error subscribers with invalid value", () => {
         const now = new Date().getTime();
 
-        const afterNow = transformable({
+        const {
+            number,
+            date,
+            string,
+            numberValidationStatus,
+            dateValidationStatus,
+            stringValidationStatus,
+        } = transformable({
             name: "number",
             transforms: {
                 string: {
@@ -118,46 +158,26 @@ describe("transformable", (it) => {
             },
         }, now);
 
-        const errors = new Set();
-        const {
-            number, string, date, numberError, dateError, stringError,
-        } = afterNow;
+        assert.is(numberValidationStatus.get(), "done", Error("Initial value should be assumed to be valid"));
+        assert.is(dateValidationStatus.get(), "done", Error("Initial value should be assumed to be valid"));
+        assert.is(stringValidationStatus.get(), "done", Error("Initial value should be assumed to be valid"));
 
-        function persistError(error) {
-            if (error) {
-                errors.add(error);
-            }
-        }
-
-        numberError.subscribe(persistError);
-        dateError.subscribe(persistError);
-        stringError.subscribe(persistError);
-
-        // Error stores are all undefined to begin with
-        assert.is(errors.size, 0, Error("All error stores should begin empty"));
-
-        // Valid values triggers now errors
         const newNow = now + 1;
+        const oldNow = now - 1;
+
         number.set(newNow);
-        assert.is(number.get(), newNow);
-        assert.is(errors.size, 0, Error("Store should not error on valid values"));
+        assert.is(numberValidationStatus.error, null, Error("Store should not error on valid values"));
 
-        // Validation that returns an `Error` triggers error subscriber calls
-        // Store is not modified. `update` is unsuccessful.
-        number.update((now) => now - 10);
-        assert.is(number.get(), newNow);
-        assert.is(errors.size, 1);
+        number.set(oldNow);
+        assert.is(numberValidationStatus.error?.value, oldNow, Error("Store should error on invalid values"));
 
-        const wrongNow = String(Number(now) - 10);
-        string.set(wrongNow);
-        assert.is(number.get(), newNow);
-        assert.is(errors.size, 2);
+        date.set(new Date());
+        assert.is(number.get(), newNow, Error("Store should ignore falsy assertion"));
+        assert.is(dateValidationStatus.error, null, Error("Store should not error on ignored values"));
 
-        // Validation that returns `false` triggers no subscriber calls
-        // Store is not modified. `set` is unsuccessful.
-        date.set(new Date(now - 1));
-        assert.is(number.get(), newNow);
-        assert.is(errors.size, 2);
+        const stringNewNow = String(newNow);
+        string.set(stringNewNow);
+        assert.is(stringValidationStatus.error?.value, stringNewNow, Error("Transform should error on invalid values"));
     });
 
     it("checks for equality", () => {

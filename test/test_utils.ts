@@ -47,7 +47,12 @@ export function assert_writable(...stores: unknown[]): void {
         });
 
         count.set(0);
-        count.update((n) => Number(n) + 1);
+        assert.is(Number(count.get()), 0, Error("'set' input should be equal to 'get' output"));
+        count.update((n) => {
+            const value = Number(n);
+            assert.is(value, 0, Error("'get' output should be equal to 'update' input"));
+            return value + 1;
+        });
 
         unsubscribe();
 

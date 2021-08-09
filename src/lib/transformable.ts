@@ -1,8 +1,8 @@
-import { error_equal, set, subscribe } from "./store";
+import { has, identity, noop, valid } from "./utils";
 import type {
-    ErrorSubscriber,
     Invalidator,
-    Readable,
+    IOReadable,
+    IOStatus,
     StartStopNotifier,
     State,
     SubscribeInvalidateTuple,
@@ -11,7 +11,7 @@ import type {
     Validator,
     Writable,
 } from "./types";
-import { has, identity, noop, valid } from "./utils";
+import { set, subscribe } from "./store";
 import { dequal } from "dequal/lite";
 
 export interface TransformableOptions<T> {
@@ -56,12 +56,21 @@ export interface TransformableOptions<T> {
 interface Obj {
     [key: string]: unknown;
 }
-type AddProp<T extends Obj, K extends string, V> = Record<K, V> & T;
 type AddSuffix<Key, Suffix extends string> = Key extends string
     ? `${Key}${Suffix}`
     : never
 type RemoveSuffix<SuffixedKey, Suffix extends string>
     = SuffixedKey extends AddSuffix<infer Key, Suffix> ? Key : "";
+
+export type TransformResult<O extends Obj, K extends string, I> = {
+    [P in K]: Writable<I>
+} &{
+    [P in `${K}ValidationStatus`]: IOReadable<I>
+} & {
+    [P in keyof O]: Writable<O[P]>
+} & {
+    [P in AddSuffix<keyof O, "ValidationStatus"> ]: IOReadable<O[RemoveSuffix<P, "ValidationStatus">]>
+}
 
 export function transformable<I, K extends string, O extends Obj>(
     options: {
@@ -80,11 +89,7 @@ export function transformable<I, K extends string, O extends Obj>(
         validate?: Validator<I>,
     },
     value?: I,
-) : {
-        [P in keyof AddProp<O, K, I>]: Writable<AddProp<O, K, I>[P]>
-    } & {
-        [P in AddSuffix<keyof AddProp<O, K, I>, "Error"> ]: Readable<AddProp<O, K, I>[RemoveSuffix<P, "Error">]>
-    }
+) : { [P in keyof TransformResult<O, K, I>]: TransformResult<O, K, I>[P] }
 
 /**
  * Create a `Transformable` store that allows both updating and reading by subscription.
@@ -139,25 +144,48 @@ export function transformable<T>(
             set ready(value) {
                 ready = value;
             },
-            error: {
-                equal: error_equal,
-                ready: false,
-                value: null,
-                subscribers: new Set<ErrorSubscriber<unknown>>(),
-            },
         }, state);
+
+        let status: IOStatus = "done";
+        const validation_scope: State<IOStatus> = {
+            equal: dequal,
+            ready: false,
+            subscribers: new Set<SubscribeInvalidateTuple<IOStatus>>(),
+            get value() {
+                return status;
+            },
+            set value(value) {
+                status = value;
+            },
+        };
+
+        const validation_readable: IOReadable<unknown> = {
+            subscribe: subscribe.bind(undefined, validation_scope),
+            get: () => status,
+            reset: () => {
+                status = "done";
+                validation_readable.error = null;
+            },
+            error: null,
+        };
 
         return Object.assign(stores, {
             [transform]: {
-                get: () => transform_state.value,
+                get: () => from(v),
                 set: (new_value) => {
                     const validate_result = validate(new_value);
-                    const error = validate_result instanceof Error
-                        ? Object.assign(validate_result, { value: new_value })
-                        : null;
-                    set(transform_state.error, error);
-                    if (validate_result === true) {
-                        set(transform_state, to(new_value));
+                    if (validate_result instanceof Error) {
+                        validation_readable.error = Object.assign(
+                            validate_result,
+                            { value: new_value },
+                        );
+                        set<IOStatus>(validation_scope, "error");
+                    } else {
+                        validation_readable.error = null;
+                        set<IOStatus>(validation_scope, "done");
+                        if (validate_result === true) {
+                            set(transform_state, to(new_value));
+                        }
                     }
                 },
                 subscribe: (run: Subscriber, invalidate: Invalidator) => (
@@ -168,15 +196,11 @@ export function transformable<T>(
                     )
                 ),
                 update(fn: Updater) {
-                    this.set(fn(transform_state.value));
+                    this.set(fn(from(v)));
                 },
                 reset,
             },
-            [`${transform}Error`]: {
-                subscribe: subscribe.bind(null, transform_state.error),
-                get: () => transform_state.error.value,
-                reset: () => transform_state.error.value = null,
-            },
+            [`${transform}ValidationStatus`]: validation_readable,
         });
     }
 
