@@ -171,7 +171,6 @@ export function transformable<T>(
                     this.set(fn(transform_state.value));
                 },
                 reset,
-                state: transform_state,
             },
             [`${transform}Error`]: {
                 subscribe: subscribe.bind(null, transform_state.error),
