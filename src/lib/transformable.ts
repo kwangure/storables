@@ -62,7 +62,7 @@ type AddSuffix<Key, Suffix extends string> = Key extends string
 type RemoveSuffix<SuffixedKey, Suffix extends string>
     = SuffixedKey extends AddSuffix<infer Key, Suffix> ? Key : "";
 
-export type TransformResult<O extends Obj, K extends string, I> = {
+type TransformResult<O extends Obj, K extends string, I> = {
     [P in K]: Writable<I>
 } &{
     [P in `${K}ValidationStatus`]: IOReadable<I>
