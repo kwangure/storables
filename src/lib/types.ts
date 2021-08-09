@@ -32,8 +32,7 @@ export interface State<T> {
 	equal?: Equal<T>,
 	subscribers: Set<SubscribeInvalidateTuple<T>>,
 	ready?: boolean;
-	error?: Omit<State<TransformError<T>>, "error">,
-};
+}
 
 /** Transform to new value */
 export interface Transformer<T1, T2> {
@@ -80,4 +79,10 @@ export interface Writable<T> extends Readable<T> {
 	 * @param updater callback
 	 */
 	update(this: void, updater: Updater<T>): void;
+}
+
+export type IOStatus = "pending" | "done" | "error";
+
+export interface IOReadable<T> extends Readable<IOStatus> {
+	error: Error & { value: T }
 }

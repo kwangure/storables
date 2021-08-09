@@ -1,12 +1,19 @@
-import type { Invalidator, Readable, StartStopNotifier, SubscribeInvalidateTuple, Subscriber, Unsubscriber, Writable } from "./types";
+import type {
+    Invalidator,
+    IOStatus,
+    Readable,
+    StartStopNotifier,
+    SubscribeInvalidateTuple,
+    Subscriber,
+    Unsubscriber,
+    Writable,
+} from "./types";
 import { dequal } from "dequal/lite";
 import { noop } from "./utils";
 
 interface Obj {
     [key: string]: unknown;
 }
-
-export type IOStatus = "pending" | "done" | "error";
 
 export interface IO<T> {
     /**
