@@ -13,6 +13,10 @@ export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 /** Guard writable from invalid values */
 export type Validator<T> = (value?: T) => (boolean | Error);
 
+/** Validate writable from invalid values */
+export type AsyncValidator<T> = (value?: T)
+    => Promise<boolean | Error> | (boolean | Error);
+
 /** Cleanup logic callback. */
 export type Invalidator<T = unknown> = (value?: T) => void;
 
