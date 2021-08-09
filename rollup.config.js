@@ -1,5 +1,6 @@
 import dts from "rollup-plugin-dts";
 import { fileURLToPath } from "url";
+import node from "@rollup/plugin-node-resolve";
 import path from "path";
 import typescript from "@rollup/plugin-typescript";
 
@@ -18,6 +19,7 @@ export default [
             sourcemap: true,
         },
         plugins: [
+            node(),
             typescript(),
         ],
     },

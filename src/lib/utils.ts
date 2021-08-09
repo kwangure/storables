@@ -29,9 +29,3 @@ export function noop(): void { }
 export function valid(): boolean {
     return true;
 }
-
-export function safe_equal(a: unknown, b: unknown): boolean {
-    return !(a != a
-        ? b == b
-        : a !== b || ((a && typeof a === "object") || typeof a === "function"));
-}

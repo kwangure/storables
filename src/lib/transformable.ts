@@ -11,7 +11,8 @@ import type {
     Validator,
     Writable,
 } from "./types";
-import { has, identity, noop, safe_equal, valid } from "./utils";
+import { has, identity, noop, valid } from "./utils";
+import { dequal } from "dequal/lite";
 
 export interface TransformableOptions<T> {
     name: string;
@@ -95,7 +96,7 @@ export function transformable<T>(
     value?: T,
 ): Obj {
     const {
-        equal = safe_equal,
+        equal = dequal,
         name,
         start = noop,
         transforms = {},

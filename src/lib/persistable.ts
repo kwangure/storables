@@ -1,5 +1,6 @@
 import type { Invalidator, Readable, StartStopNotifier, SubscribeInvalidateTuple, Subscriber, Unsubscriber, Writable } from "./types";
-import { noop, safe_equal } from "./utils";
+import { dequal } from "dequal/lite";
+import { noop } from "./utils";
 
 interface Obj {
     [key: string]: unknown;
@@ -63,7 +64,7 @@ export function persistable<T>(
     options: PersistableOptions<T>,
     default_value?: T,
 ): Obj {
-    const { name, io, equal = safe_equal } = options;
+    const { name, io, equal = dequal } = options;
     const start: StartStopNotifier<T> = io.update || noop;
 
     let value: T;

@@ -93,25 +93,6 @@ describe("transformable", (it) => {
         assert.equal(called, 0);
     });
 
-    it("does not assume date is immutable", () => {
-        const obj = {};
-        let called = 0;
-
-        const { store } = transformable({ name: "store" }, obj);
-
-        const unsubscribe = store.subscribe(() => {
-            called += 1;
-        });
-
-        store.set(obj);
-        assert.equal(called, 2);
-
-        store.update((obj) => obj);
-        assert.equal(called, 3);
-
-        unsubscribe();
-    });
-
     it("calls error subscribers with invalid value", () => {
         const now = new Date().getTime();
 
