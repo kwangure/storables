@@ -45,5 +45,17 @@
   "type": "module",
   "dependencies": {
     "dequal": "^2.0.2"
-  }
+  },
+  "keywords": [
+    "checkable",
+    "derived",
+    "localStorage",
+    "persistable",
+    "readable",
+    "store",
+    "svelte",
+    "transformable",
+    "validation",
+    "writable"
+  ]
 }
