@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.0](https://github.com/kwangure/storables/compare/v0.0.2-rc.1...v0.1.0) (2021-08-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* use `check` and `assert` instead of `validate`
+* use validationStatus pattern in `transformable`
+* rename `Options` to `TransformableOptions`
+
+### Features
+
+* add reset helper to persistable ([3d505dd](https://github.com/kwangure/storables/commit/3d505dd125aeaf84ae06784d68c082e2bc447764))
+* add validable ([466c415](https://github.com/kwangure/storables/commit/466c415d77f620327edaeed6b01f8fb677920e85))
+* rename `Options` to `TransformableOptions` ([be3e617](https://github.com/kwangure/storables/commit/be3e617a9f129f576e0e8fb6be7f7c63bb513f8f))
+* use `check` and `assert` instead of `validate` ([9f1f89b](https://github.com/kwangure/storables/commit/9f1f89bacfeadbff125ddbafdf78cc7b20e6f877))
+* use dequal/lite to check for equality ([bf5a509](https://github.com/kwangure/storables/commit/bf5a5097654c2e3b50d97569f8f6eb65b6b19d99))
+* use validationStatus pattern in `transformable` ([3312c79](https://github.com/kwangure/storables/commit/3312c79862284d78c18d462c4da61b539022ffeb))
+
+
+### Bug Fixes
+
+* check for falsy stores ([3c8ad40](https://github.com/kwangure/storables/commit/3c8ad405f69eac024e5162a1f87bbc67690184b5))
+* oops. remove debug code ([6a3b746](https://github.com/kwangure/storables/commit/6a3b74621a24a01af87862474cc0d200d1ce8fc0))
+* package validatables ([1a79ada](https://github.com/kwangure/storables/commit/1a79ada62ca113e1e6aff8433d6abad5f7e4842f))
+
 ### [0.0.2-rc.1](https://github.com/kwangure/storables/compare/v0.0.2-rc.0...v0.0.2-rc.1) (2021-08-06)
 
 ### [0.0.2-rc.0](https://github.com/kwangure/storables/compare/v0.0.1...v0.0.2-rc.0) (2021-08-06)
