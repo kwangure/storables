@@ -2,7 +2,9 @@
   "name": "storables",
   "version": "0.0.2-rc.1",
   "exports": {
+    "./package.json": "./package.json",
     ".": "./dist/index.js",
+    "./checkable": "./dist/checkable.js",
     "./persistable": "./dist/persistable.js",
     "./transformable": "./dist/transformable.js"
   },
@@ -36,7 +38,6 @@
     "svelte": "^3.34.0",
     "svelte-check": "^2.0.0",
     "svelte-preprocess": "^4.0.0",
-    "ts-node": "^10.1.0",
     "tslib": "^2.0.0",
     "typescript": "^4.0.0",
     "uvu": "^0.5.1"
