@@ -1,5 +1,5 @@
-import { has, identity, noop, valid } from "./utils";
 import type {
+    Assertor,
     Invalidator,
     IOReadable,
     IOStatus,
@@ -8,9 +8,10 @@ import type {
     SubscribeInvalidateTuple,
     Subscriber,
     Updater,
-    Validator,
+    ValuedError,
     Writable,
 } from "./types";
+import { has, identity, noop, valid } from "./utils";
 import { set, subscribe } from "./store";
 import { dequal } from "dequal/lite";
 
@@ -33,7 +34,7 @@ export interface TransformableOptions<T> {
          * Guard transformed writable from invalid values
          * @param value transformed value
          */
-        validate?: Validator<unknown>;
+        assert?: Assertor<unknown>;
     }>
 
     /**
@@ -50,7 +51,7 @@ export interface TransformableOptions<T> {
      * Guard root writable from invalid values
      * @param value root value
      */
-    validate?: Validator<T>;
+    assert?: Assertor<T>;
 }
 
 interface Obj {
@@ -65,11 +66,11 @@ type RemoveSuffix<SuffixedKey, Suffix extends string>
 type TransformResult<O extends Obj, K extends string, I> = {
     [P in K]: Writable<I>
 } &{
-    [P in `${K}ValidationStatus`]: IOReadable<I>
+    [P in `${K}AssertStatus`]: IOReadable<I>
 } & {
     [P in keyof O]: Writable<O[P]>
 } & {
-    [P in AddSuffix<keyof O, "ValidationStatus"> ]: IOReadable<O[RemoveSuffix<P, "ValidationStatus">]>
+    [P in AddSuffix<keyof O, "AssertStatus"> ]: IOReadable<O[RemoveSuffix<P, "AssertStatus">]>
 }
 
 export function transformable<I, K extends string, O extends Obj>(
@@ -79,14 +80,14 @@ export function transformable<I, K extends string, O extends Obj>(
             [P in keyof O]: {
                 from: (val: I) => O[P],
                 to: (val: O[P]) => I
-                validate?: Validator<O[P]>
+                assert?: Assertor<O[P]>
             }
         } & {
             [P in K]?: never;
         },
         equal?: (a: I, b: I) => boolean,
         start?: StartStopNotifier<I>,
-        validate?: Validator<I>,
+        assert?: Assertor<I>,
     },
     value?: I,
 ) : { [P in keyof TransformResult<O, K, I>]: TransformResult<O, K, I>[P] }
@@ -105,7 +106,7 @@ export function transformable<T>(
         name,
         start = noop,
         transforms = {},
-        validate = valid,
+        assert = valid,
     } = options;
 
     const state = {
@@ -123,12 +124,12 @@ export function transformable<T>(
         from: identity,
         start,
         to: identity,
-        validate,
+        assert,
         transform: name,
     });
 
     function append_store(options) {
-        const { from, start, to, transform, validate } = options;
+        const { from, start, to, transform, assert } = options;
 
         const transform_state: State<unknown> = Object.assign({
             start,
@@ -173,20 +174,18 @@ export function transformable<T>(
             [transform]: {
                 get: () => from(v),
                 set: (new_value) => {
-                    const validate_result = validate(new_value);
-                    if (validate_result instanceof Error) {
-                        validation_readable.error = Object.assign(
-                            validate_result,
-                            { value: new_value },
-                        );
-                        set<IOStatus>(validation_scope, "error");
-                    } else {
-                        validation_readable.error = null;
-                        set<IOStatus>(validation_scope, "done");
-                        if (validate_result === true) {
+                    let error: ValuedError<unknown> = null;
+                    let status: IOStatus = "done";
+                    try {
+                        if (assert(new_value) === true) {
                             set(transform_state, to(new_value));
                         }
+                    } catch (caught) {
+                        error = Object.assign(caught, { value: new_value });
+                        status = "error";
                     }
+                    validation_readable.error = error;
+                    set<IOStatus>(validation_scope, status);
                 },
                 subscribe: (run: Subscriber, invalidate: Invalidator) => (
                     subscribe(
@@ -200,14 +199,14 @@ export function transformable<T>(
                 },
                 reset,
             },
-            [`${transform}ValidationStatus`]: validation_readable,
+            [`${transform}AssertStatus`]: validation_readable,
         });
     }
 
     for (const transform in transforms) {
         if (has(transforms, transform)) {
-            const { from, to, validate = valid } = transforms[transform];
-            append_store({ from, to, transform, validate });
+            const { from, to, assert = valid } = transforms[transform];
+            append_store({ from, to, transform, assert });
         }
     }
 

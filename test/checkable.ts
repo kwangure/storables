@@ -1,22 +1,22 @@
 import * as assert from "uvu/assert";
 import { assert_readable, assert_writable, describe } from "./test_utils";
+import { checkable } from "../src/lib/checkable";
 import { debouncible } from "../src/lib/debouncible";
 import { noop } from "../src/lib/utils";
-import { validatable } from "../src/lib/validatable";
 
 // TODO: `invalidate`-`svelte/store/derived` tests
 
-describe("validatable", (it) => {
+describe("checkable", (it) => {
     it("creates named writable stores", () => {
-        const stores = validatable({
+        const stores = checkable({
             name: "count",
-            validate: () => true,
+            check: () => true,
         }, undefined as number);
 
-        const { count, countValidationStatus } = stores;
+        const { count, countCheckStatus } = stores;
 
         assert_writable(count);
-        assert_readable(countValidationStatus);
+        assert_readable(countCheckStatus);
 
         const counts = [];
         const unsubscribe = count.subscribe((value) => {
@@ -38,13 +38,13 @@ describe("validatable", (it) => {
     });
 
     it("creates undefined writable stores", () => {
-        const { writable, writableValidationStatus } = validatable({ name: "writable" });
+        const { writable, writableCheckStatus } = checkable({ name: "writable" });
         const values = [];
 
         writable.subscribe((value) => {
             values.push("writable", value);
         })();
-        writableValidationStatus.subscribe((value) => {
+        writableCheckStatus.subscribe((value) => {
             values.push("error", value);
         })();
 
@@ -54,7 +54,7 @@ describe("validatable", (it) => {
     it("calls start and stop notifiers", () => {
         let called = 0;
 
-        const { writable } = validatable({
+        const { writable } = checkable({
             name: "writable",
             start() {
                 called += 1;
@@ -80,24 +80,24 @@ describe("validatable", (it) => {
     it("calls error subscribers with invalid value", () => {
         const now = new Date().getTime();
 
-        const { number, numberValidationStatus } = validatable({
+        const { number, numberCheckStatus } = checkable({
             name: "number",
-            validate(newNow) {
+            check(newNow) {
                 // This is an error, but I know what I'm doing
                 if (typeof newNow === "string") return false;
                 // This is an error, scream!
-                if (newNow < now) return Error("Date must be after now");
+                if (newNow < now) throw Error("Date must be after now");
                 // This is not an error
                 return true;
             },
         }, now);
 
-        assert.is(numberValidationStatus.get(), "done", Error("Initial value should be assumed to be valid"));
+        assert.is(numberCheckStatus.get(), "done", Error("Initial value should be assumed to be valid"));
 
         const newNow = now + 1;
         const oldNow = now - 1;
-        debouncible(numberValidationStatus, (value) => {
-            const { error } = numberValidationStatus;
+        debouncible(numberCheckStatus, (value) => {
+            const { error } = numberCheckStatus;
             if (value === "pending") {
                 assert.is(error, null);
             }
@@ -106,7 +106,7 @@ describe("validatable", (it) => {
 
                 // The validation of `newNow` is thrown away because it is asynchronous
                 // but `String(oldNow)` is called immediately after synchronously
-                assert.is.not(number.get(), newNow, "Validation should be asynchronous");
+                assert.is.not(number.get(), newNow, "Check validation should be asynchronous");
                 assert.is(number.get(), `${oldNow}`);
             }
             if (value === "error") {
@@ -124,7 +124,7 @@ describe("validatable", (it) => {
 
     it("checks for equality", () => {
         let equal = true;
-        const { count } = validatable({
+        const { count } = checkable({
             name: "count",
             equal: () => equal,
         }, 0);

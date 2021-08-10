@@ -11,4 +11,4 @@ export type {
 } from "./types";
 export * from "./persistable";
 export * from "./transformable";
-export * from "./validatable";
+export * from "./checkable";

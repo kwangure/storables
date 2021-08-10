@@ -27,7 +27,7 @@ export default [
             "src/lib/index.ts",
             "src/lib/transformable.ts",
             "src/lib/persistable.ts",
-            "src/lib/validatable.ts",
+            "src/lib/checkable.ts",
         ],
         output: {
             dir: "dist",
@@ -47,7 +47,7 @@ export default [
             "dist/dts/index.d.ts",
             "dist/dts/transformable.d.ts",
             "dist/dts/persistable.d.ts",
-            "dist/dts/validatable.d.ts",
+            "dist/dts/checkable.d.ts",
         ],
         output: {
             dir: "dist",

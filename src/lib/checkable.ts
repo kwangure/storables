@@ -1,19 +1,19 @@
 import type {
-    AsyncValidator,
+    Checker,
     IOReadable,
     IOStatus,
     StartStopNotifier,
     State,
     SubscribeInvalidateTuple,
     Updater,
-    Validator,
+    ValuedError,
     Writable,
 } from "./types";
 import { noop, valid } from "./utils";
 import { set, subscribe } from "./store";
 import { dequal } from "dequal/lite";
 
-export interface ValidatableOptions<T> {
+export interface CheckableOptions<T> {
     name: string;
 
     /**
@@ -30,37 +30,37 @@ export interface ValidatableOptions<T> {
      * Guard root writable from invalid values
      * @param value root value
      */
-    validate?: AsyncValidator<T>;
+    check?: Checker<T>;
 }
 
 interface Obj {
     [key: string]: unknown;
 }
 
-export function validatable<I, K extends string>(
+export function checkable<I, K extends string>(
     options: {
         name: K,
         equal?: (a: I, b: I) => boolean,
         start?: StartStopNotifier<I>,
-        validate?: Validator<I>,
+        check?: Checker<I>,
     },
     value?: I,
 ) : {
         [P in K]: Writable<I>;
     } & {
-        [P in `${K}ValidationStatus` ]: IOReadable<I>;
+        [P in `${K}CheckStatus` ]: IOReadable<I>;
     }
 
 /**
- * Create a `Validatable` store that allows both updating and reading by subscription.
- * @param {Options} options validatable options
+ * Create a `Checkable` store that allows both updating and reading by subscription.
+ * @param {Options} options checkable options
  * @param {*} value initial value
  */
-export function validatable<T>(
-    options: ValidatableOptions<T>,
+export function checkable<T>(
+    options: CheckableOptions<T>,
     value?: T,
 ): Obj {
-    const { equal = dequal, name, start = noop, validate = valid } = options;
+    const { equal = dequal, name, start = noop, check = valid } = options;
 
     let v = value;
     const reset = () => v = value;
@@ -78,7 +78,7 @@ export function validatable<T>(
     };
 
     let status: IOStatus = "done";
-    const validation_status: State<IOStatus> = {
+    const check_status: State<IOStatus> = {
         equal: dequal,
         ready: false,
         subscribers: new Set<SubscribeInvalidateTuple<IOStatus>>(),
@@ -90,12 +90,12 @@ export function validatable<T>(
         },
     };
 
-    const validation_readable: IOReadable<T> = {
-        subscribe: subscribe.bind(null, validation_status),
+    const check_readable: IOReadable<T> = {
+        subscribe: subscribe.bind(null, check_status),
         get: () => status,
         reset: () => {
             status = "done";
-            validation_readable.error = null;
+            check_readable.error = null;
         },
         error: null,
     };
@@ -105,21 +105,22 @@ export function validatable<T>(
         async set(new_value: T) {
             set<T>(scope, new_value);
 
-            validation_readable.error = null;
-            set<IOStatus>(validation_status, "pending");
-            const validate_result = await validate(new_value);
+            check_readable.error = null;
+            set<IOStatus>(check_status, "pending");
+
+            let error: ValuedError<T> = null;
+            let status: IOStatus = "done";
+            try {
+                await check(new_value);
+            } catch (caught) {
+                error = Object.assign(caught, { value: new_value });
+                status = "error";
+            }
             // `writable.set` was called while we were running validation
             if (!equal(v, new_value)) return;
 
-            if (validate_result instanceof Error) {
-                validation_readable.error = Object.assign(validate_result, {
-                    value: new_value,
-                });
-                set<IOStatus>(validation_status, "error");
-            } else {
-                validation_readable.error = null;
-                set<IOStatus>(validation_status, "done");
-            }
+            check_readable.error = error;
+            set<IOStatus>(check_status, status);
         },
         subscribe: subscribe.bind(null, scope),
         update(fn: Updater) {
@@ -130,6 +131,6 @@ export function validatable<T>(
 
     return {
         [name]: writable,
-        [`${name}ValidationStatus`]: validation_readable,
+        [`${name}CheckStatus`]: check_readable,
     };
 }

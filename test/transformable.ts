@@ -19,13 +19,13 @@ describe("transformable", (it) => {
 
         const {
             count,
-            countValidationStatus,
+            countAssertStatus,
             string_count,
-            string_countValidationStatus,
+            string_countAssertStatus,
         } = stores;
 
         assert_writable(count, string_count);
-        assert_readable(countValidationStatus, string_countValidationStatus);
+        assert_readable(countAssertStatus, string_countAssertStatus);
 
         const counts = [];
         const unsubscribe_c = count.subscribe((value) => {
@@ -87,17 +87,17 @@ describe("transformable", (it) => {
     });
 
     it("creates undefined writable stores", () => {
-        const { writable, writableValidationStatus } = transformable({ name: "writable" });
+        const { writable, writableAssertStatus } = transformable({ name: "writable" });
         const values = [];
 
         writable.subscribe((value) => {
             values.push("writable", value);
         })();
-        writableValidationStatus.subscribe((value) => {
-            values.push("validation", value);
+        writableAssertStatus.subscribe((value) => {
+            values.push("assert", value);
         })();
 
-        assert.equal(values, ["writable", undefined, "validation", "done"]);
+        assert.equal(values, ["writable", undefined, "assert", "done"]);
     });
 
     it("calls start and stop notifiers", () => {
@@ -133,51 +133,53 @@ describe("transformable", (it) => {
             number,
             date,
             string,
-            numberValidationStatus,
-            dateValidationStatus,
-            stringValidationStatus,
+            numberAssertStatus,
+            dateAssertStatus,
+            stringAssertStatus,
         } = transformable({
             name: "number",
             transforms: {
                 string: {
                     from: String,
                     to: Number,
-                    validate: () => Error("Unhelpful string error."),
+                    assert: () => {
+                        throw Error("Unhelpful string error.");
+                    },
                 },
                 date: {
                     from: (number: number) => new Date(number),
                     to: (date: Date) => date.getTime(),
-                    validate: () => false,
+                    assert: () => false,
                 },
             },
-            validate(newNow) {
+            assert(newNow) {
                 if (newNow < now) {
-                    return Error("Date must be after now");
+                    throw Error("Date must be after now");
                 }
                 return true;
             },
         }, now);
 
-        assert.is(numberValidationStatus.get(), "done", Error("Initial value should be assumed to be valid"));
-        assert.is(dateValidationStatus.get(), "done", Error("Initial value should be assumed to be valid"));
-        assert.is(stringValidationStatus.get(), "done", Error("Initial value should be assumed to be valid"));
+        assert.is(numberAssertStatus.get(), "done", Error("Initial value should be assumed to be valid"));
+        assert.is(dateAssertStatus.get(), "done", Error("Initial value should be assumed to be valid"));
+        assert.is(stringAssertStatus.get(), "done", Error("Initial value should be assumed to be valid"));
 
         const newNow = now + 1;
         const oldNow = now - 1;
 
         number.set(newNow);
-        assert.is(numberValidationStatus.error, null, Error("Store should not error on valid values"));
+        assert.is(numberAssertStatus.error, null, Error("Store should not error on valid values"));
 
         number.set(oldNow);
-        assert.is(numberValidationStatus.error?.value, oldNow, Error("Store should error on invalid values"));
+        assert.is(numberAssertStatus.error?.value, oldNow, Error("Store should error on invalid values"));
 
         date.set(new Date());
         assert.is(number.get(), newNow, Error("Store should ignore falsy assertion"));
-        assert.is(dateValidationStatus.error, null, Error("Store should not error on ignored values"));
+        assert.is(dateAssertStatus.error, null, Error("Store should not error on ignored values"));
 
         const stringNewNow = String(newNow);
         string.set(stringNewNow);
-        assert.is(stringValidationStatus.error?.value, stringNewNow, Error("Transform should error on invalid values"));
+        assert.is(stringAssertStatus.error?.value, stringNewNow, Error("Transform should error on invalid values"));
     });
 
     it("checks for equality", () => {

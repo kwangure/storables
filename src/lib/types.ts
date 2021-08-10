@@ -11,11 +11,10 @@ export type Updater<T = unknown> = (value: T) => T;
 export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
 
 /** Guard writable from invalid values */
-export type Validator<T> = (value?: T) => (boolean | Error);
+export type Assertor<T> = (value?: T) => boolean | never;
 
-/** Validate writable from invalid values */
-export type AsyncValidator<T> = (value?: T)
-    => Promise<boolean | Error> | (boolean | Error);
+/** Validate a writable's value */
+export type Checker<T> = (value?: T) => Promise<boolean> | boolean | never;
 
 /** Cleanup logic callback. */
 export type Invalidator<T = unknown> = (value?: T) => void;
@@ -25,8 +24,6 @@ export type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
 
 /** Compare if two values are equal */
 export type Equal<T> = (a: T, b: T) => boolean;
-
-export type ErrorSubscriber<T> = SubscribeInvalidateTuple<TransformError<T>>;
 
 /** A writable's internal state */
 export interface State<T> {
@@ -44,7 +41,7 @@ export interface Transformer<T1, T2> {
     fn: (value: T1) => T2;
 }
 
-export interface TransformError<T> extends Error {
+export interface ValuedError<T> extends Error {
     value: T;
 }
 
@@ -88,5 +85,5 @@ export interface Writable<T> extends Readable<T> {
 export type IOStatus = "pending" | "done" | "error";
 
 export interface IOReadable<T> extends Readable<IOStatus> {
-	error: Error & { value: T }
+	error: ValuedError<T>
 }
