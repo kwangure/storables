@@ -22,7 +22,7 @@
     "release": "standard-version -a && npm publish && git push --follow-tags origin master"
   },
   "devDependencies": {
-    "@kwangure/eslint-config-svelte": "^0.1.17",
+    "@kwangure/eslint-config-svelte": "^0.1.18",
     "@rollup/plugin-node-resolve": "^13.0.4",
     "@rollup/plugin-typescript": "^8.2.3",
     "@sveltejs/kit": "next",
