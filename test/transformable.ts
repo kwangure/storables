@@ -103,13 +103,23 @@ describe("transformable", (it) => {
     it("calls start and stop notifiers", () => {
         let called = 0;
 
-        const { writable } = transformable({
+        const { adder, writable } = transformable({
             name: "writable",
             start() {
                 called += 1;
                 return function stop() {
                     called -= 1;
                 };
+            },
+            transforms: {
+                adder: {
+                    from(value): number {
+                        return value + 1;
+                    },
+                    to(value: number) {
+                        return value - 1;
+                    },
+                },
             },
         }, 0);
 
@@ -123,6 +133,18 @@ describe("transformable", (it) => {
         assert.equal(called, 1);
 
         unsubscribe2();
+        assert.equal(called, 0);
+
+        const unsubscribe3 = adder.subscribe(noop);
+        assert.equal(called, 1);
+
+        const unsubscribe4 = adder.subscribe(noop);
+        assert.equal(called, 1);
+
+        unsubscribe3();
+        assert.equal(called, 1);
+
+        unsubscribe4();
         assert.equal(called, 0);
     });
 

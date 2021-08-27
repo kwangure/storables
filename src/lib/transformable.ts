@@ -122,14 +122,13 @@ export function transformable<T>(
 
     append_store({
         from: identity,
-        start,
         to: identity,
         assert,
         transform: name,
     });
 
     function append_store(options) {
-        const { from, start, to, transform, assert } = options;
+        const { from, to, transform, assert } = options;
 
         const transform_state: State<unknown> = Object.assign({
             start,
