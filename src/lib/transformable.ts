@@ -109,14 +109,27 @@ export function transformable<T>(
         assert = valid,
     } = options;
 
-    const state = {
-        equal,
-        stop: null,
-        subscribers: new Set<SubscribeInvalidateTuple<unknown>>(),
-    };
     let ready = false;
     let v = value;
     const reset = () => v = value;
+    const state: State<unknown> = {
+        equal,
+        stop: null,
+        subscribers: new Set<SubscribeInvalidateTuple<unknown>>(),
+        start,
+        get value() {
+            return v;
+        },
+        set value(value) {
+            v = value;
+        },
+        get ready() {
+            return ready;
+        },
+        set ready(value) {
+            ready = value;
+        },
+    };
 
     const stores: Obj = {};
 
@@ -129,22 +142,6 @@ export function transformable<T>(
 
     function append_store(options) {
         const { from, to, transform, assert } = options;
-
-        const transform_state: State<unknown> = Object.assign({
-            start,
-            get value() {
-                return v;
-            },
-            set value(value) {
-                v = value;
-            },
-            get ready() {
-                return ready;
-            },
-            set ready(value) {
-                ready = value;
-            },
-        }, state);
 
         let status: IOStatus = "done";
         const validation_scope: State<IOStatus> = {
@@ -177,7 +174,7 @@ export function transformable<T>(
                     let status: IOStatus = "done";
                     try {
                         if (assert(new_value) === true) {
-                            set(transform_state, to(new_value));
+                            set(state, to(new_value));
                         }
                     } catch (caught) {
                         error = Object.assign(caught, { value: new_value });
@@ -187,11 +184,7 @@ export function transformable<T>(
                     set<IOStatus>(validation_scope, status);
                 },
                 subscribe: (run: Subscriber, invalidate: Invalidator) => (
-                    subscribe(
-                        transform_state,
-                        (value) => run(from(value)),
-                        invalidate,
-                    )
+                    subscribe(state, (value) => run(from(value)), invalidate)
                 ),
                 update(fn: Updater) {
                     this.set(fn(from(v)));
