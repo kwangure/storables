@@ -117,6 +117,9 @@ export function checkable<T>(
                 status = "error";
             }
             // `writable.set` was called while we were running validation
+            // TODO-1: Add failing test for what happens when you remove this check
+            // TODO-2: Use blank object (`{}`) as unique key for each `set` call and
+            // compare those instead, since `equal` might be expensive.
             if (!equal(v, new_value)) return;
 
             check_readable.error = error;
