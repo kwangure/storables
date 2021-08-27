@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.1-rc.0](https://github.com/kwangure/storables/compare/v0.1.0...v0.1.1-rc.0) (2021-08-27)
+
+
+### Bug Fixes
+
+* call `start` for all transforms ([087c04c](https://github.com/kwangure/storables/commit/087c04c2d47a4d2a31c133bd66a67b021fabb1ff))
+
 ## [0.1.0](https://github.com/kwangure/storables/compare/v0.0.2-rc.1...v0.1.0) (2021-08-10)
 
 
