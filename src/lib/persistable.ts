@@ -71,6 +71,7 @@ export function persistable<T>(
     const start: StartStopNotifier<T> = io.update || noop;
 
     let value: T;
+    let store_value: T;
     let initial_value: T;
 
     const status = {
@@ -195,8 +196,8 @@ export function persistable<T>(
     async function read() {
         try {
             status.read = "pending";
-            const store_value = await io.read();
-            if (store_value === null) {
+            store_value = await io.read();
+            if (store_value === undefined) {
                 set(default_value);
                 write(default_value);
             } else {
@@ -217,7 +218,8 @@ export function persistable<T>(
     async function write(new_value) {
         status.write = "pending";
         try {
-            if (!equal(value, new_value)) {
+            if (!equal(store_value, new_value)) {
+                store_value = new_value;
                 await io.write(new_value);
             }
             status.write = "done";

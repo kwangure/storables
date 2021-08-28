@@ -1,5 +1,6 @@
 import * as assert from "uvu/assert";
 import { assert_readable, assert_writable, describe } from "./test_utils";
+import { on } from "../src/lib/utils";
 import { persistable } from "../src/lib/persistable";
 
 describe("persistable", (it) => {
@@ -31,12 +32,12 @@ describe("persistable", (it) => {
         assert.equal(countReadStatus.get(), "pending");
     });
 
-    it("writes default value if read returns null", () => {
+    it("writes default value if read returns undefined", async function named() {
         const write_storage = [];
         const { value, valueReadStatus } = persistable({
             name: "value",
             io: {
-                read: () => Promise.resolve(null),
+                read: () => Promise.resolve(undefined),
                 write: (count: number) => {
                     write_storage.push(count);
                     return Promise.resolve(null);
@@ -44,16 +45,12 @@ describe("persistable", (it) => {
             },
         }, "default value");
 
-        const statuses = [];
-        const unsubscribe = valueReadStatus.subscribe((status) => {
-            statuses.push(status);
-            if (status === "done") {
-                assert.is(value.get(), "default value");
-                assert.equal(write_storage, ["default value"]);
-                assert.equal(statuses, ["pending", "done"]);
-                unsubscribe();
-            }
-        });
+        await on("done", valueReadStatus);
+
+        assert.is(value.get(), "default value", Error("Store should set default value if read is unsucessful."));
+        assert.equal(write_storage, ["default value"], Error("Store should write default value if read is unsucessful."));
+
+        console.log("after promise", { value: value.get() });
     });
 
     it("sets status to error", () => {
