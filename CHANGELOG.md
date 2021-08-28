@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0-rc.0](https://github.com/kwangure/storables/compare/v0.1.1...v0.2.0-rc.0) (2021-08-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* `write` value if `read` returns undefined
+
+### Features
+
+* `write` value if `read` returns undefined ([87f3c7d](https://github.com/kwangure/storables/commit/87f3c7d773a0fc49ae0439ab0fb635b614d47dac))
+
 ### [0.1.1](https://github.com/kwangure/storables/compare/v0.1.1-rc.1...v0.1.1) (2021-08-27)
 
 ### [0.1.1-rc.1](https://github.com/kwangure/storables/compare/v0.1.1-rc.0...v0.1.1-rc.1) (2021-08-27)
