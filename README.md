@@ -12,6 +12,7 @@ within a store's lifetime.
     <summary>✅ Asynchronous validation</summary>
 
     ```javascript
+    const initialValue = "John Smith";
     const { username, usernameCheckStatus } = checkable({
         name: "username",
         async check(newUsername) {
@@ -24,7 +25,7 @@ within a store's lifetime.
             // This value is valid
             return true;
         },
-    }, now);
+    }, initialValue);
     ```
 
     `$usernameCheckStatus` is `"pending"` while validating the value asynchronously.
@@ -33,10 +34,12 @@ within a store's lifetime.
 
     `$usernameCheckStatus` is `"error"` if the validation throws an error.
 
-    In the above example, `usernameCheckStatus.error` is `"Username is already taken"` if
+    In the above example, `usernameCheckStatus.error` is `Error("Username is already taken")` if
     `$usernameCheckStatus === "error"`. It is `null` otherwise.
 
     Unlike the transformable's `assert`, `check` is not write-blocking.
+
+    The default/initial value is not validated.
 </details>
 
 <br>
@@ -55,7 +58,8 @@ Persist your store's value in localStorage or your database —store it anywhere
         io: {
             read: async () => await readFromDatabase(),
             update(set) {
-                onDatabaseChange((value) => set(value))
+                const cleanUp = onDatabaseChange((value) => set(value));
+                return cleanUp;
             },
             write: async (value) => await writeToDatabase(value),
         },
@@ -88,7 +92,7 @@ Persist your store's value in localStorage or your database —store it anywhere
 
     `$countWriteStatus` is `"error"` if the `write` throws an error.
 
-    In the above example, `countWriteStatus.error` is `"Could not write invalid value"`
+    In the above example, `countWriteStatus.error` is `Error("Could not write invalid value")`
     if `$countWriteStatus === "error"`. It is `null` otherwise.
 </details>
 
@@ -100,7 +104,7 @@ If Svelte's built-in `writable` and `derived` stores had a baby, it would be `tr
 
 ### Features
 - <details>
-    <summary>🔄 Two-way transforms</summary>
+    <summary>🔄 Two-way transforms (...more like many-way transforms)</summary>
 
     ```javascript
     const { dateObject, number } = transformable({
@@ -141,9 +145,11 @@ If Svelte's built-in `writable` and `derived` stores had a baby, it would be `tr
     }, now);
     ```
 
-    `numberAssertStatus.error` is `"Date must be after now"` if
+    `numberAssertStatus.error` is `Error("Date must be after now")` if
     `$numberAssertStatus === "error"`. It is `null` otherwise.
 
     `assert` is write-blocking. If it throws or returns `false` the value of the store
     will not change and subscribers will not be called.
+
+    The default/initial value is not validated.
 </details>
