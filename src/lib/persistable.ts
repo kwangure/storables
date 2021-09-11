@@ -35,24 +35,26 @@ export interface IO<T> {
 }
 
 export interface PersistableOptions<T> {
-    name: string;
+    /**
+     * Compare old and new writable value to determine whether to update
+     * @param a the previous value
+     * @param b the new value
+     */
+    equal?: (a: T, b: T) => boolean;
     /**
      * Read, write and update functions to sync storage with writable
      */
     io: IO<T>;
-    /**
-     * Compare old and new writable value to determine whether to update
-     */
-    equal?: (a: T, b: T) => boolean;
+    name: string;
 }
 
 const subscriber_queue = [];
 
 export function persistable<K extends string, I>(
     options: {
-        name: K,
-        io: IO<I>,
         equal?: (a: I, b: I) => boolean,
+        io: IO<I>,
+        name: K
     },
     default_value?: I,
 ) : {

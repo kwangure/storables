@@ -14,23 +14,16 @@ import { set, subscribe } from "./store";
 import { dequal } from "dequal/lite";
 
 export interface CheckableOptions<T> {
-    name: string;
+    /** Guard root writable from invalid values */
+    check?: Checker<T>;
 
-    /**
-     * Compare old and new writable value to determine whether to update
-     */
+    /** Compare old and new writable value to determine whether to update */
     equal?: (a: T, b: T) => boolean;
 
-    /**
-     * Start and stop notification callbacks for subscriptions
-     */
-    start?: StartStopNotifier<T>;
+    name: string;
 
-    /**
-     * Guard root writable from invalid values
-     * @param value root value
-     */
-    check?: Checker<T>;
+    /** Start and stop notification callbacks for subscriptions */
+    start?: StartStopNotifier<T>;
 }
 
 interface Obj {
@@ -39,10 +32,10 @@ interface Obj {
 
 export function checkable<I, K extends string>(
     options: {
-        name: K,
-        equal?: (a: I, b: I) => boolean,
-        start?: StartStopNotifier<I>,
         check?: Checker<I>,
+        equal?: (a: I, b: I) => boolean,
+        name: K,
+        start?: StartStopNotifier<I>
     },
     value?: I,
 ) : {

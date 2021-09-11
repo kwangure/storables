@@ -27,18 +27,18 @@ export type Equal<T> = (a: T, b: T) => boolean;
 
 /** A writable's internal state */
 export interface State<T> {
+	equal?: Equal<T>,
+	ready?: boolean;
 	start?: StartStopNotifier<T>;
 	stop?: Unsubscriber;
-	value: T;
-	equal?: Equal<T>,
 	subscribers: Set<SubscribeInvalidateTuple<T>>,
-	ready?: boolean;
+	value: T;
 }
 
 /** Transform to new value */
 export interface Transformer<T1, T2> {
-    name: string;
     fn: (value: T1) => T2;
+    name: string;
 }
 
 export interface ValuedError<T> extends Error {
@@ -46,7 +46,17 @@ export interface ValuedError<T> extends Error {
 }
 
 export interface Readable<T> {
-    /**
+	/**
+	 * Get store value.
+	 */
+	get(this: void): T;
+
+	/**
+	 * Revert store to its original value
+	 */
+	reset(this: void): void;
+
+	/**
 	 * Subscribe on value changes.
 	 * @param run subscription callback
 	 * @param invalidate cleanup callback
@@ -56,16 +66,6 @@ export interface Readable<T> {
         run: Subscriber<T>,
         invalidate?: Invalidator<T>
     ): Unsubscriber;
-
-    /**
-	 * Get store value.
-	 */
-	get(this: void): T;
-
-	/**
-	 * Revert store to its original value
-	 */
-	reset(this: void): void;
 }
 
 export interface Writable<T> extends Readable<T> {

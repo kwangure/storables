@@ -16,8 +16,30 @@ import { set, subscribe } from "./store";
 import { dequal } from "dequal/lite";
 
 export interface TransformableOptions<T> {
+    /**
+     * Guard root writable from invalid values
+     */
+    assert?: Assertor<T>;
+    /**
+     * Compare old and new writable value to determine whether to update
+     * @param a the previous value
+     * @param b the new value
+     */
+    equal?: (a: T, b: T) => boolean;
+
     name: string;
+
+    /**
+     * Start and stop notification callbacks for subscriptions
+     */
+    start?: StartStopNotifier<T>;
+
     transforms?: Record<string, {
+        /**
+         * Guard transformed writable from invalid values
+         */
+        assert?: Assertor<unknown>;
+
         /**
          * Transform from root value to transformed value
          * @param value root value
@@ -29,29 +51,7 @@ export interface TransformableOptions<T> {
          * @param value transformed value
          */
         to: (value: unknown) => T;
-
-        /**
-         * Guard transformed writable from invalid values
-         * @param value transformed value
-         */
-        assert?: Assertor<unknown>;
     }>
-
-    /**
-     * Compare old and new writable value to determine whether to update
-     */
-    equal?: (a: T, b: T) => boolean;
-
-    /**
-     * Start and stop notification callbacks for subscriptions
-     */
-    start?: StartStopNotifier<T>;
-
-    /**
-     * Guard root writable from invalid values
-     * @param value root value
-     */
-    assert?: Assertor<T>;
 }
 
 interface Obj {
@@ -75,19 +75,19 @@ type TransformResult<O extends Obj, K extends string, I> = {
 
 export function transformable<I, K extends string, O extends Obj>(
     options: {
+        assert?: Assertor<I>,
+        equal?: (a: I, b: I) => boolean,
         name: K,
+        start?: StartStopNotifier<I>,
         transforms?: {
             [P in keyof O]: {
+                assert?: Assertor<O[P]>,
                 from: (val: I) => O[P],
                 to: (val: O[P]) => I
-                assert?: Assertor<O[P]>
             }
         } & {
             [P in K]?: never;
-        },
-        equal?: (a: I, b: I) => boolean,
-        start?: StartStopNotifier<I>,
-        assert?: Assertor<I>,
+        }
     },
     value?: I,
 ) : { [P in keyof TransformResult<O, K, I>]: TransformResult<O, K, I>[P] }
