@@ -24,7 +24,7 @@ export interface IO<T> {
     /**
      * Update writable when persistent storage changes.
      */
-    update?: (set: Subscriber<T>) => Unsubscriber | void;
+    start?: (set: Subscriber<T>) => Unsubscriber | void;
 
     /**
      * Write value to persistent storage
@@ -70,7 +70,7 @@ export function persistable<T>(
     default_value?: T,
 ): Obj {
     const { name, io, equal = dequal } = options;
-    const start: StartStopNotifier<T> = io.update || noop;
+    const start: StartStopNotifier<T> = io.start || noop;
 
     let value: T;
     let store_value: T;
