@@ -50,7 +50,6 @@ describe("persistable", (it) => {
         assert.is(value.get(), "default value", Error("Store should set default value if read is unsucessful."));
         assert.equal(write_storage, ["default value"], Error("Store should write default value if read is unsucessful."));
 
-        console.log("after promise", { value: value.get() });
     });
 
     it("sets status to error", () => {

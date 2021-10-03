@@ -32,7 +32,6 @@ export function noop(): void { }
 export function on(status: IOStatus, ...stores: Readable<IOStatus>[]) {
     return Promise.all(stores.map((store) => new Promise<void>((resolve) => {
         const unsubscribe = store.subscribe((s) => {
-            console.log({s, status})
             if (s === status) {
                 unsubscribe();
                 resolve();
