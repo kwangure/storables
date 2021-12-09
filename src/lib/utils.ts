@@ -43,3 +43,13 @@ export function on(status: IOStatus, ...stores: Readable<IOStatus>[]) {
 export function valid(): boolean {
     return true;
 }
+
+export class ValueError<T> extends Error {
+    readonly value: T;
+
+    constructor(message: string, value: T) {
+        super(message);
+        
+        this.value = value;
+    }
+}

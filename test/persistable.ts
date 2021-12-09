@@ -1,15 +1,21 @@
 import * as assert from "uvu/assert";
 import { assert_readable, assert_writable, describe } from "./test_utils";
-import { on } from "../src/lib/utils";
+import { noop } from "../src/lib/utils";
 import { persistable } from "../src/lib/persistable";
+
+// TODO: block calls to `store.set` and `store.update` before `io.read` is done
+// TODO: test read StopNotifier/cleanup
+// TODO: clean up output type into one interface object. Remove `&`s.
 
 describe("persistable", (it) => {
     it("creates named writable stores", () => {
-        const stores = persistable({
+        const stores = persistable<"count", number>({
             name: "count",
             io: {
-                read: () => Promise.resolve(0),
-                write: () => Promise.resolve(null),
+                read: noop,
+                write: (value, { set }) => {
+                    set(value);
+                },
             },
         });
 
@@ -19,11 +25,11 @@ describe("persistable", (it) => {
         assert_readable(countReadStatus, countWriteStatus);
     });
 
-    it("read status is intially pending", () => {
+    it("read status is initially pending", () => {
         const { count, countReadStatus } = persistable({
             name: "count",
             io: {
-                read: () => Promise.resolve(0),
+                read: noop,
                 write: () => Promise.resolve(null),
             },
         });
@@ -32,39 +38,18 @@ describe("persistable", (it) => {
         assert.equal(countReadStatus.get(), "pending");
     });
 
-    it("writes default value if read returns undefined", async function named() {
-        const write_storage = [];
-        const { value, valueReadStatus } = persistable({
-            name: "value",
-            io: {
-                read: () => Promise.resolve(undefined),
-                write: (count: number) => {
-                    write_storage.push(count);
-                    return Promise.resolve(null);
-                },
-            },
-        }, "default value");
-
-        await on("done", valueReadStatus);
-
-        assert.is(value.get(), "default value", Error("Store should set default value if read is unsucessful."));
-        assert.equal(write_storage, ["default value"], Error("Store should write default value if read is unsucessful."));
-
-    });
-
     it("sets status to error", () => {
         const { store, storeReadStatus, storeWriteStatus } = persistable({
             name: "store",
             io: {
-                read: () => {
-                    throw Error("Don't wanna read");
+                read: ({ error }) => {
+                    error("Don't wanna read");
                 },
-                write: () => {
-                    throw Error("I hate writing");
+                write: (value, { error }) => {
+                    error("I hate writing");
                 },
             },
-        }, -1 as number);
-
+        });
         storeReadStatus.subscribe((status) => {
             if (status === "pending" || status === "done") {
                 assert.is(storeReadStatus.error, null);
@@ -81,17 +66,22 @@ describe("persistable", (it) => {
                 assert.is(storeWriteStatus.error.message, "I hate writing");
             }
         });
+
+        // Trigger read error
+        store.subscribe(noop)();
+        // Trigger write error
         store.set(0);
     });
 
     it("checks for equality", () => {
-        let value;
         let equal = true;
         const { count } = persistable({
             name: "count",
             io: {
-                read: () => value,
-                write: (v) => value = v,
+                read: noop,
+                write: (value, { set }) => {
+                    set(value);
+                },
             },
             equal: () => equal,
         });

@@ -1,3 +1,11 @@
+/**
+ * TODO: Bikeshed naming conventions. Because I didn't want to overshadow
+ * the `Set` builtin, I use `StoreSet` which has started a chain reaction
+ * of types that should probably be renamed for the sake of consistency.
+ *
+ * Consistency with `svelte/store` types might be worth contending with too.
+ */
+
 /** Callback to inform of a value updates. */
 export type Subscriber<T = unknown> = (value: T) => void;
 
@@ -6,6 +14,22 @@ export type Unsubscriber = () => void;
 
 /** Callback to update a value. */
 export type Updater<T = unknown> = (value: T) => T;
+
+/** Set value and inform subscribers. */
+export type StoreSet<T> = (this: void, value: T) => void;
+
+/** Update value using callback and inform subscribers. */
+export type StoreUpdate<T> = (this: void, updater: Updater<T>) => void;
+
+/** Set the error status of a store */
+export type StoreError<T>
+	= (this: void, error: string | ValuedError<T>) => void;
+
+export interface StoreWrite<T> {
+	error: StoreError<T>;
+	set: StoreSet<T>;
+	update: StoreUpdate<T>
+}
 
 /** Start and stop notification callbacks. */
 export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
@@ -68,19 +92,7 @@ export interface Readable<T> {
     ): Unsubscriber;
 }
 
-export interface Writable<T> extends Readable<T> {
-    /**
-	 * Set value and inform subscribers.
-	 * @param value to set
-	 */
-	set(this: void, value: T): void;
-
-	/**
-	 * Update value using callback and inform subscribers.
-	 * @param updater callback
-	 */
-	update(this: void, updater: Updater<T>): void;
-}
+export type Writable<T> = Readable<T> & StoreWrite<T>
 
 export type IOStatus = "pending" | "done" | "error";
 
