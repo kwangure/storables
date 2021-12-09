@@ -1,6 +1,6 @@
 {
   "name": "storables",
-  "version": "0.2.0-rc.0",
+  "version": "0.2.0",
   "exports": {
     "./package.json": "./package.json",
     ".": "./dist/index.js",

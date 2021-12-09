@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/kwangure/storables/compare/v0.2.0-rc.0...v0.2.0) (2021-12-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* cleanup io `read` and `write` API
+* rename persistable `update` to `start` for consistency
+
+### Features
+
+* cleanup io `read` and `write` API ([062c713](https://github.com/kwangure/storables/commit/062c713f2de4978ca695850083d6c1ab26124ab7))
+* rename persistable `update` to `start` for consistency ([d0b0403](https://github.com/kwangure/storables/commit/d0b0403731468f3b7afe9bb6189a7baed7d4492d))
+
 ## [0.2.0-rc.0](https://github.com/kwangure/storables/compare/v0.1.1...v0.2.0-rc.0) (2021-08-28)
 
 
