@@ -56,14 +56,22 @@ Persist your store's value in localStorage or your database —store it anywhere
     const { count } = persistable({
         name: "count",
         io: {
-            read: async () => await readFromDatabase(),
-            update(set) {
-                const cleanUp = onDatabaseChange((value) => set(value));
+            read({ set }) {
+                readFromDatabase()
+                    .then(value => set(value))
+                    .catch(() => defaultValue);
+                const cleanUp = onDatabaseChange(value => set(value));
                 return cleanUp;
             },
-            write: async (value) => await writeToDatabase(value),
+            write: (value, { set, error }) => {
+                try {
+                    writeToDatabase(value).then(value => set(value););
+                } catch (e) {
+                    error("Save unsuccessful. Please try again later.");
+                }
+            },
         },
-    }, defaultValue);
+    });
     ```
 </details>
 
@@ -71,19 +79,21 @@ Persist your store's value in localStorage or your database —store it anywhere
     <summary>✅ Validation</summary>
 
     ```javascript
-    const defaultValue = 0;
     const { count, countWriteStatus } = persistable({
         name: "count",
         io: {
-            read: () => JSON.parse(localStorage.getItem("count")),
-            write: (value) => {
+            read: ({ set }) => {
+                set(JSON.parse(localStorage.getItem("count")));
+            },
+            write: (value, { set, error }) => {
                 if (isInvalid(value)) {
-                    throw Error("Could not write invalid value");
+                    error("Heeyo! Value is invalid.");
                 }
                 localStorage.setItem("count", JSON.stringify(value));
+                set(value);
             },
         },
-    }, defaultValue);
+    });
     ```
 
     `$countWriteStatus` is `"pending"` while writing value.
